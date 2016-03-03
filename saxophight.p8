@@ -4,22 +4,21 @@ __lua__
 --saxophight!
 --help max the sax make his way in the cutthroat world of underground jazz
 
+--player
 p = {}
-notes = {}
-shatter = {}
-tpt_spawns = {}
-trumpets = {}
+p.max_dx = 2
+p.x_col_l_bound = {6,0} --lower bound for h collision
+p.x_col_u_bound = {15,9} --upper bound for h collision
+p.player = true
+
 spawn = {}
 spawn.x = {72,231}
 spawn.y = {48,119}
-counter = 0
 blues_beat = 12 --frames per beat (75 bpm)
 bebop_beat = 12 --frames per beat (150 bpm)
-beat = blues_beat
 g = .15 --gravity acceleration (pixels/frame^2)
 max_dy = 7 --terminal vel, prevents going through 8x8 tile
 camera_delay = 7
-camera_follow = {}
 debug_freeze = false
 slow_count = 0
 debug_string="nope"
@@ -27,47 +26,62 @@ debug_string="nope"
 --music stuff
 blues_chords = {1,1,1,1,4,4,1,1,5,4,1,5,1,1,1,1,4,4,1,1,5,4,1,1}
 blues_bass_pos = {1,1,1,2,1,1,1,0,1,2,1,2,1,0,1,2,0,0,0,2,0,2,0,2,0,0,0,2,0,2,0,1,2,2,2,1,0,0,0,2,0,0,0,1,2,1,2,1,0,1,0,2,0,2,0,2,0,1,0,1,0,2,0,1,2,1,2,1,2,1,2,1,2,0,2,1,2,1,2,0,1,2,1,0,2,0,2,1,2,1,2,1,2,1,2,1}
-note_counter = 1
-chord_counter = 1
-triplet_flag = false
-prev_note = 12
-
---background animation state
-arm_in = false
-head_nod = false
-
---game state
-game_points = 0
-health = 40
-breath = 40
 
 function _init()
-	p.x = 120
-	p.y = 112
-	p.dx = 0
-	p.dy = 0
-	p.ddx = 0
-	p.max_dx = 2
-	p.dir = 1
-	p.state = 0 --0:stand,1:run,2:jump
-	p.frame = 0 --animation frame
-	p.sprite = 0 --animation offset
-	p.jump_reset = true --flag for jump key release
-	p.x_col_l_bound = {6,0}	--lower bound for h collision
-	p.x_col_u_bound = {15,9} --upper bound for h collision
-	p.x_col = {0,10}	--horizontal collision box
-	p.y_col = {0,30} --vertical collision box
-	p.player = true --player flag
-	
-	for i=1,camera_delay do
-	 c = {}
-		c.x = p.x-60
-		c.y = p.y-96
-		camera_follow[i] = c
-	end
-	
-	--sound test
-	music(0)
+	reset(1)
+end
+
+--reset the game for another round
+--game_mode=1:blues
+--game_mode=2:bebop
+function reset(game_mode)
+ --reset a lot of state
+ notes = {}
+ shatter = {}
+ tpt_spawns = {}
+ trumpets = {}
+ counter = 0
+ camera_follow = {}
+ note_counter = 1
+ chord_counter = 1
+ triplet_flag = false
+ prev_note = 12 --todo: update for bebop
+ arm_in = false
+ head_nod = false
+ 
+ --hud
+ game_points = 0
+ health = 40
+ breath = 40
+ 
+ --player initialization
+ p.x = 120
+ p.y = 112
+ p.dx = 0
+ p.dy = 0
+ p.ddx = 0
+ p.dir = 1
+ p.state = 0 --0:stand,1:run,2:jump
+ p.frame = 0 --animation frame
+ p.sprite = 0 --animation offset
+ p.jump_reset = true --flag for jump key release
+ p.x_col = {0,9} --horizontal collision box
+ p.y_col = {0,30} --vertical collision box
+ 
+ for i=1,camera_delay do
+  c={}
+  c.x = p.x-60
+  c.y = p.y-96
+  camera_follow[i] = c
+ end
+ 
+ --blues- vs bebop-specific
+ if (game_mode == 1) then
+  beat = blues_beat
+  music(0)
+ else
+  beat = bebop_beat
+ end
 end
 
 function h_physics(obj)
@@ -628,6 +642,12 @@ function _update()
 		if (breath<40) breath+=1
 		if (breath>40) breath=40
 	end
+
+ --debug actions
+ if (btn(1,1)) then
+  reset(1)
+  return
+ end
 
  --update player position
 	standard_physics(p)
