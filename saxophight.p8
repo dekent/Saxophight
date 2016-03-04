@@ -4,6 +4,9 @@ __lua__
 --saxophight!
 --help max the sax make his way in the cutthroat world of underground jazz
 
+--game screen
+screen=0 --0:title,1:play,2:lose
+
 --player
 p = {}
 p.max_dx = 2
@@ -28,7 +31,7 @@ blues_chords = {1,1,1,1,4,4,1,1,5,4,1,5,1,1,1,1,4,4,1,1,5,4,1,1}
 blues_bass_pos = {1,1,1,2,1,1,1,0,1,2,1,2,1,0,1,2,0,0,0,2,0,2,0,2,0,0,0,2,0,2,0,1,2,2,2,1,0,0,0,2,0,0,0,1,2,1,2,1,0,1,0,2,0,2,0,2,0,1,0,1,0,2,0,1,2,1,2,1,2,1,2,1,2,0,2,1,2,1,2,0,1,2,1,0,2,0,2,1,2,1,2,1,2,1,2,1}
 
 function _init()
-	reset(1)
+	--reset(1)
 end
 
 --reset the game for another round
@@ -598,69 +601,82 @@ function update_music()
 end
 
 function _update()
- slow_count += 1
- --if (slow_count % 15 ~= 0) return
- if (debug_freeze) return
- 
- --update the state of the world
- foreach(notes, move_note)
- foreach(trumpets, move_trumpet)
- 
- --player actions
-	--horizontal movement
-	p_on_ground = on_ground(p)
-	if (p_on_ground) then
-		if (btn(0) and not against_wall(p,-1)) run_p(-1)
-		if (btn(1) and not against_wall(p,1)) run_p(1)
-		if (not btn(0) and not btn(1)) then
-			p.ddx=0
-		 p.state=0
-		 p.frame=0
-		end
-	else
-	 if (btn(0)) air_drift(-1)
-		if (btn(1)) air_drift(1)
-		if (not btn(0) and not btn(1)) p.ddx=0
-	end
-	
-	--jump
-	if (on_ground(p)) then
-	 if (p.jump_reset) then
-			if (btn(4) and p.jump_reset) then
-				p.start_jump=true
-				p.jump_reset = false
-			end
-		else
-			if (not btn(4)) p.jump_reset = true
-		end
-	end
-	
-	--blow
-	if (btn(5)) then
-		blow()
-	else
-		if (breath<40) breath+=1
-		if (breath>40) breath=40
-	end
-
- --debug actions
- if (btn(1,1)) then
-  reset(1)
-  return
+ if screen == 0 then
+  if btnp(4) then
+   screen = 1
+   reset(1)
+  end
  end
 
- --update player position
-	standard_physics(p)
+ if screen == 1 then
+  slow_count += 1
+  --if (slow_count % 15 ~= 0) return
+  if (debug_freeze) return
+  
+  --update the state of the world
+  foreach(notes, move_note)
+  foreach(trumpets, move_trumpet)
+  
+  --player actions
+	 --horizontal movement
+	 p_on_ground = on_ground(p)
+	 if (p_on_ground) then
+	 	if (btn(0) and not against_wall(p,-1)) run_p(-1)
+	 	if (btn(1) and not against_wall(p,1)) run_p(1)
+	 	if (not btn(0) and not btn(1)) then
+	 		p.ddx=0
+	 	 p.state=0
+	 	 p.frame=0
+	 	end
+	 else
+	  if (btn(0)) air_drift(-1)
+	 	if (btn(1)) air_drift(1)
+	 	if (not btn(0) and not btn(1)) p.ddx=0
+	 end
 	
-	check_object_collisions()
- update_effects()
+ 	--jump
+ 	if (on_ground(p)) then
+	  if (p.jump_reset) then
+		 	if (btn(4) and p.jump_reset) then
+			 	p.start_jump=true
+			 	p.jump_reset = false
+			 end
+		 else
+			 if (not btn(4)) p.jump_reset = true
+		 end
+	 end
 	
-	--create new enemies
-	spawn_enemies()
+	 --blow
+	 if (btn(5)) then
+	 	blow()
+	 else
+	 	if (breath<40) breath+=1
+	 	if (breath>40) breath=40
+	 end
+
+  --debug actions
+  if (btn(1,1)) then
+   reset(1)
+   return
+  end
+
+  --update player position
+	 standard_physics(p)
 	
-	--final state updates
-	update_animations()
-	update_music()
+	 check_object_collisions()
+  update_effects()
+	
+	 --create new enemies
+	 spawn_enemies()
+	
+	 --final state updates
+	 update_animations()
+	 update_music()
+ end
+ 
+ if screen == 2 then
+ 
+ end
 end
 
 function update_camera()
@@ -805,42 +821,53 @@ function draw_hud()
 end
 
 function _draw()
- cls()
- 
- --render background
- update_camera()
- update_background()
-	map(0,0,0,0,48,32)
 
- --render background characters
- palt(0,false)
- palt(11,true)
- draw_background_chars()
-	
-	--render max the sax
-	sprite = p.sprite
-	if (p.dir == -1) sprite+=8
-	for shift=0,48,16 do
-		spr(48-shift+sprite, p.x, p.y-shift/2)
-		spr(49-shift+sprite, p.x+8, p.y-shift/2)
-	end
-	
-	palt(o,true)
-	
-	--render the brass enemies
-	draw_enemies()
-	
-	--render music notes
-	draw_notes()
-	
-	--render effects
-	draw_effects()
-	
-	--debug
- print(max(sqrt(game_points/3),3), p.x, p.y-30) 
+ cls()
+
+ if screen == 0 then
+  print("max the sax",1,1)
+ end
  
- --render hud
- draw_hud()
+ if screen == 1 then
+  --render background
+  update_camera()
+  update_background()
+	 map(0,0,0,0,48,32)
+  
+  --render background characters
+  palt(0,false)
+  palt(11,true)
+  draw_background_chars()
+	 
+	 --render max the sax
+	 sprite = p.sprite
+	 if (p.dir == -1) sprite+=8
+	 for shift=0,48,16 do
+	 	spr(48-shift+sprite, p.x, p.y-shift/2)
+	 	spr(49-shift+sprite, p.x+8, p.y-shift/2)
+	 end
+	 
+	 palt(o,true)
+	 
+	 --render the brass enemies
+	 draw_enemies()
+	 
+	 --render music notes
+	 draw_notes()
+	 
+	 --render effects
+	 draw_effects()
+ 	
+ 	--debug
+  print(max(sqrt(game_points/3),3), p.x, p.y-30) 
+  
+  --render hud
+  draw_hud()
+ end
+ 
+ if screen == 2 then
+ 
+ end
 end
 __gfx__
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
