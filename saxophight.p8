@@ -7,6 +7,11 @@ __lua__
 --game screen
 screen=0 --0:title,1:play,2:lose
 
+--title screen
+title_direction=0
+top_score_blues=0
+top_score_bebop=0
+
 --player
 p = {}
 p.max_dx = 2
@@ -67,7 +72,7 @@ function reset(game_mode)
  p.state = 0 --0:stand,1:run,2:jump
  p.frame = 0 --animation frame
  p.sprite = 0 --animation offset
- p.jump_reset = true --flag for jump key release
+ p.jump_reset = false --flag for jump key release
  p.x_col = {0,9} --horizontal collision box
  p.y_col = {0,30} --vertical collision box
  
@@ -602,6 +607,15 @@ end
 
 function _update()
  if screen == 0 then
+  
+  if btnp(1) then
+   title_direction = 1
+  end
+  
+  if btnp(0) then
+   title_direction = 0
+  end
+  
   if btnp(4) then
    screen = 1
    reset(1)
@@ -807,17 +821,28 @@ function draw_hud()
  	rectfill(124-breath+1,3,124,6)
  end
 
- --score
+ --score 
+ print_centered_n(game_points,65,4,3)
+ print_centered_n(game_points,64,3,11)
+ 
+end
 
- score_x=62
- if (game_points>9) score_x=60
- if (game_points>99) score_x=58
- if (game_points>999) score_x=56
- if (game_points>9999) score_x=54
- 
- print(game_points,score_x,4,3)
- print(game_points,score_x,3,11)
- 
+function print_centered(text,tx,ty,tcol)
+ if (tcol == nil) then
+ 	tcol = 6
+ end
+ print(text, tx-#text*2, ty, tcol)
+end
+
+--print centered for numbers
+function print_centered_n(number,tx,ty,tcol)
+ temp_number = number
+ ndigits = 1
+ while (temp_number > 9) do
+  temp_number = flr(temp_number/10)
+  ndigits += 1
+ end
+ print(number, tx-ndigits*2, ty, tcol)
 end
 
 function _draw()
@@ -825,7 +850,34 @@ function _draw()
  cls()
 
  if screen == 0 then
-  print("max the sax",1,1)
+  print_centered("saxophight",65,2,4)
+  print_centered("saxophight",64,1,10)
+  print_centered("help max the sax make his",64,8)
+  print_centered("way in the cutthroat world of",64,14)
+  print_centered("underground jazz",64,20)
+  
+  blues_color1 = 5
+  blues_color2 = 6
+  bebop_color1 = 5
+  bebop_color2 = 6
+  
+  if title_direction == 0 then
+   blues_color1 = 1
+   blues_color2 = 12
+  else
+   bebop_color1 = 2
+   bebop_color2 = 8
+  end
+  
+  print_centered("blues",33,39,blues_color1)
+  print_centered("blues",32,38,blues_color2)
+  print_centered_n(top_score_blues,33,46,blues_color1)
+  print_centered_n(top_score_blues,32,45,blues_color2)
+  
+  print_centered("bebop",97,39,bebop_color1)  
+  print_centered("bebop",96,38,bebop_color2)
+  print_centered_n(top_score_bebop,97,46,bebop_color1)
+  print_centered_n(top_score_bebop,96,45,bebop_color2)
  end
  
  if screen == 1 then
