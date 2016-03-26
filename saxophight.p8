@@ -36,7 +36,7 @@ blues_chords = {1,1,1,1,4,4,1,1,5,4,1,5,1,1,1,1,4,4,1,1,5,4,1,1}
 blues_bass_pos = {1,1,1,2,1,1,1,0,1,2,1,2,1,0,1,2,0,0,0,2,0,2,0,2,0,0,0,2,0,2,0,1,2,2,2,1,0,0,0,2,0,0,0,1,2,1,2,1,0,1,0,2,0,2,0,2,0,1,0,1,0,2,0,1,2,1,2,1,2,1,2,1,2,0,2,1,2,1,2,0,1,2,1,0,2,0,2,1,2,1,2,1,2,1,2,1}
 
 function _init()
-	--reset(1)
+	
 end
 
 --reset the game for another round
@@ -56,6 +56,12 @@ function reset(game_mode)
  prev_note = 12 --todo: update for bebop
  arm_in = true
  head_nod = false
+ play_snare = false
+ play_kick = false
+ play_hihat = false
+ snare_counter = 0
+ kick_counter = 0
+ hihat_counter = 0
  
  --hud
  game_points = 0
@@ -166,6 +172,11 @@ function check_object_collisions()
      tpt.frame = 0
 	    tpt.dx = 0
 	    tpt.dy = -1
+	    if game_points % 3 == 0 then
+ 	    play_kick = true
+ 	   else
+ 	    play_hihat = true
+ 	   end
     end
   	 destroy_note(note)
    end
@@ -176,7 +187,7 @@ function check_object_collisions()
  for tpt in all(trumpets) do
   if (obj_collision(tpt,p)) then
    if (tpt.sprite<136) then
-    sfx(19,2)
+    play_snare = true
     health -= 2.5
     if (health<0) then
     	health=0
@@ -206,15 +217,7 @@ function obj_collision(obj1, obj2)
 	c6 = y1-obj1.y_col[2]
 	c7 = y2-obj2.y_col[1]
 	c8 = y2-obj2.y_col[2]
---	return (((c1>=c3 and c1<=c4) or
---	    (c2>=c3 and c2<=c4) or
---	    (c3>=c1 and c3<=c2) or
---	    (c4>=c1 and c4<=c2)) and
---	   ((c5>=c7 and c5<=c8) or
---	    (c6>=c7 and c6<=c8) or
---	    (c7>=c5 and c7<=c6) or
---	    (c8>=c5 and c8<=c6)))
-return (c1<c4 and c2>c3 and c7>c6 and c8<c5)
+ return (c1<c4 and c2>c3 and c7>c6 and c8<c5)
 end
 
 function on_ground(obj)
@@ -364,11 +367,11 @@ function select_note(option)
  end
 
  if (option==3 or option==4) then
-  dist = add_chord(pdist,blues_chords[chord_counter],1.0)
+  pdist = add_chord(pdist,blues_chords[chord_counter],1.0)
  end
 
  if (option==5) then
-  dist = add_chord(pdist,blues_chords[chord_counter],0.5)
+  pdist = add_chord(pdist,blues_chords[chord_counter],0.5)
  end
 
  pdist_sum = 0
@@ -611,6 +614,26 @@ function update_music()
 	end
 end
 
+function update_drums()
+ if counter == 0 or counter == flr(2/3*beat) then
+  if play_kick then
+   sfx(20,1)
+   kick_counter = 4
+   play_kick = false
+  end
+  if play_hihat then
+   sfx(21,1)
+   hihat_counter = 4
+   play_hihat = false
+  end
+  if play_snare then
+   sfx(19,2)
+   snare_counter = 4
+   play_snare = false
+  end
+ end
+end
+
 function _update()
  if screen == 0 then
   
@@ -636,7 +659,7 @@ function _update()
   --update the state of the world
   foreach(notes, move_note)
   foreach(trumpets, move_trumpet)
-  
+    
   --player actions
 	 --horizontal movement
 	 p_on_ground = on_ground(p)
@@ -690,6 +713,7 @@ function _update()
 	 spawn_enemies()
 	
 	 --final state updates
+	 update_drums()
 	 update_animations()
 	 update_music()
  end
@@ -771,6 +795,29 @@ function draw_background_chars()
 	spr(209,96,88)
 	spr(224,88,96)
 	spr(225,96,96)
+	
+	--drummer
+	spr(200,116,80)
+	if snare_counter > 0 then
+	 spr(248,116,88)
+	 snare_counter -= 1
+	else
+	 spr(216,116,88)
+	end
+	if kick_counter > 0 then
+	 spr(245,108,96,2,1)
+	 kick_counter -= 1
+	else
+	 spr(231,108,96,2,1)
+	end
+	if hihat_counter > 0 then
+	 spr(201,108,80)
+	 spr(247,108,88)
+	 hihat_counter -= 1
+	else
+	 spr(199,108,80)
+	 spr(215,108,88)
+	end
 
 	--hat tipper
 	if head_nod then
@@ -1039,37 +1086,37 @@ bb55555bbbbbbbbbb555bbbbbbbbbbbbbbbbbbb55bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb55555bb
 17700000177017701770000017700000177017701770000017000000177777001770000000170000001777770017000000000000170001700001700000000000
 17700000177017701770000017700000177017701770000017000000177777001700000000170000001777770017000000000000000000007000001700017000
 bbbbbbbbb2bbbbbbb2bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbbbbbbbbb2bbbbbbb2bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb55bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbbbbbbbbb2bbbbbbb2bbbbbbbbbb555bbbbbbbbbb28bbbbbb28bbbbbbbbb5550bbbbbbbbbbbbbbbbbbbbbbbbbb28bbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbb88bbbb2bbbbbbb2bbbbbbbbbbb55055bbbbbbb2822bbbb2822bbbbbbb500055bbbbbbbbb88bbbbbbbbbbbbb2822bbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb8444bbb2bbbbbbb4bbbbbbbbbf50055bbbbbbbb2111bbbb2111bbbbbbb55555bbbbbbbbb8444bbbbbbbbbbbb2111bbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb8444bbb4bbbbbbb24bbbbbbbf50555fbbbbbbbb11ee1bbb11ee1bbbbbbbffffbbbbbbbbb8444bbbb4bbbbbbb11ee1bbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb8448bbb24bbbbb42bbbbbbbbf00ffffbbbbbbb12ee22bb12ee22bbbbbbbbff7bbbbbbbbb8448bbbb4bbbbbb12ee22bbbbbbbbbbbbbbbbbbbbbbbbb00000000
-b88ddbbb24bbbbbb2bbbbbbbbb6600ff7bbbbbbbb22ebbbbb22e660bbbbb66776dbbbbbbb88ddbbbb4bbbbbbbb22ebbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdddd442bbbbbbbbbbbbbbbbbb666776dbbbbbbb88e8bbbbb88e40bbbb66d26d6bbbbbbbbdddd444bbbbbbbbb88e8bbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbd4dd0929bbbbbbbbbbbb55bbbb6d26d6bbbbbbb8888ebbb8ee440bbb666d66d66bbbbbbbd4ddbbbbbbbbbbbb8888ebbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbd4dd99299bbbbbbbbbb555bbbbbd66d66bbbbbb8e88ee0b8888eebbb66bd66d66bbbbbbbd4ddbbbbbbbbbbbb8e88eebbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbb44092999dbbbbbbbbb000bbbbbd66d66bbbbbbbee0e66bb8800ebbbb66d66d6fbbbbbbbb44bbbbbbbbbbbbbbeebe66bbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdd4444999dbbbbbbb05555bbbbbd66d6fbbbbbb88eeee4b8888ebbbbbbfd655fbbbbbbbbdd4444bbbbbbbbbb88eeee4bbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdddd0699dbbbbbbbbbbfffbbbbb5555fbbbbbbb8888e44b8888bbbbbbbb5555fbbbbbbbbddddbbbbbbbbbbbb8888e44bbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdddd96929bbbbbbbbbbbffbbbbb5555fbbbbbbb8888b00b8888bbbbbbbb555f5bbbbbbbbddddbbbbbbbbbbbb8888bbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbddd599629bbbbbbbbb6677bbbbb555f5bbbbbbb8eeebbbb8eeebbbbbbbb55555bbbbbbbbddd5bbbbbbbbbbbb8eeebbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbddd999692dbbbbbbbb055bbbb05550550bbbbbbeebdbbbbeebdbbbbbbb555055bbbbbbbbddd55bbbbbbbbbbbeebdbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdd5999299dbbbbbbb0555bbb0555bb550bbbbbbdbbbdbbbdbbdbbbbbb555bb55bbbbbbbbdd544bbbbbbbbbbbdbbbdbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb45b999299dbbbbbbb055bbbb055bbb550bbbbbbdbbbdbbbdbbbdbbbbb55bbb55bbbbbbbb45bb4bbbbbbbbbbbdbbbdbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb4bbb9929dbbbbbbb0555bbbbb55bbb550bbbbbbdbbbdbbbdbbbdbbbbb55bbb55bbbbbbbb4bbb4bbbbbbbbbbbdbbbdbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb4bbbb92dbbbbbbbb055bbbbbb55bbb55bbbbbbbdbbb8bbbdbbbdbbbbb55bbb55bbbbbbbb4bbb4bbbbbbbbbbbdbbb8bbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb4bbbbb2bbbbbbbbbb55bbbbb445bbb55bbbbbbb88bbb8bb88bb88bbb445bbb55bbbbbbbb4bbbbbbbbbbbbbbb88bbb8bbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbbbbbbbbbbbbbbbbb444bbbbbb44bbb55bbbbbbbbbbbbbbbbbbbbbbbbb44bbb55bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbbbbbbbbbbbbbbbbbbbbbb4bbbbbbb444bbbbbbbbbbbbbbbbbbbbbbbbbbbbb444bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdddd44b2bbbbbbbbb66d26d6bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbd4dd09bb2bbbbbbb660d66d66bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb4ddd99bb2bbbbbbb660d66d66bbbbb0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb4dd092b2bbbbbbbbb66d66d6fbbbbb55bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbd44446b2bbbbbbbbbbfd655fbbbbbb5bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdddd06b2bbbbbbbbbbb5555fbbbbbbfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbdddd96b4bbbbbbbbbbb555f5bbbbbb7bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbddd599244bbbbbbbbbb55555bbbbbb6dbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbbbbbbbbb2bbbbbbb2bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb55bbbbbbbb00000000
+bbbbbbbbbb2bbbbbbb2bbbbbbbbbb555bbbbbbbbbb28bbbbbb28bbbbbbbbbbd0ddbbbbbbbbbbbbd0bbbbbbbbbbbbbbbbbbb28bbbbbbbb5550bbbbbbb00000000
+bbb88bbbb2bbbbbbb2bbbbbbbbbbb55055bbbbbbb2822bbbb2822bbbbbbbbbddddbbbbbbbbbbbbddbbbbbbbbbbbbbbbbbb2822bbbbbb500055bbbbbb00000000
+bb8444bbb2bbbbbbb4bbbbbbbbbf50055bbbbbbbb2111bbbb2111bbbbbbbbb1111dbbbbbbbbbbb11bbbbbbbbbbbbbbbbbb2111bbbbbb55555bbbbbbb00000000
+bb8444bbb4bbbbbbb24bbbbbbbf50555fbbbbbbbb11ee1bbb11ee1bbbbbbbdddddbbbbbbbbbbbdddbbbbbbbbbbbbbbbbbb11ee1bbbbbbffffbbbbbbb00000000
+bb8448bbb24bbbbb42bbbbbbbbf00ffffbbbbbbb12ee22bb12ee22bbbbbbbb9999bbbbbbbbbbbb99bbbbbbbbbbbbbbbbb12ee22bbbbbbbff7bbbbbbb00000000
+b88ddbbb24bbbbbb2bbbbbbbbb6600ff7bbbbbbbb22ebbbbb22e660bbbbfbbb997bbbbbbbbbbbbb9bbbbbbbbbbbbbbbbbb22ebbbbbbb66776dbbbbbb00000000
+bbdddd442bbbbbbbbbbbbbbbbbb666776dbbbbbbb88e8bbbbb88e40bbbbbfbdccddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb88e8bbbbb66d26d6bbbbbb00000000
+bbd4dd0929bbbbbbbbbbbb55bbbb6d26d6bbbbbbb8888ebbb8ee440bbbbbbfd77dddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb8888ebbb666d66d66bbbbb00000000
+bbd4dd99299bbbbbbbbbb555bbbbbd66d66bbbbbb8e88ee0b8888eebbbbbbd9971ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb8e88eebb66bd66d66bbbbb00000000
+bbb44092999dbbbbbbbbb000bbbbbd66d66bbbbbbbee0e66bb8800ebbbabbdddddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeebe6bbb66d66d6fbbbbb00000000
+bbdd4444999dbbbbbbb05555bbbbbd66d6fbbbbbb88eeee4b8888ebbaaaaadd1dddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb88eeeebbbbfd655fbbbbbb00000000
+bbdddd0699dbbbbbbbbbbfffbbbbb5555fbbbbbbb8888e44b8888bbb99999bdd19fffbb0bbbbbbbbbbbbbbbbbbbbbbbbbb8888e4bbbbb5555fbbbbbb00000000
+bbdddd96929bbbbbbbbbbbffbbbbb5555fbbbbbbb8888b00b8888bbbbb9bbb1dd9d55550bbbbbbbbbbbbbbbbbbbbbbbbbb8888bbbbbbb555f5bbbbbb00000000
+bbddd599629bbbbbbbbb6677bbbbb555f5bbbbbbb8eeebbbb8eeebbbbb5bbb1111577750bbbbbbbbbbbbbbbbbbbbbbbbbb8eeebbbbbbb55555bbbbbb00000000
+bbddd999692dbbbbbbbb055bbbb05550550bbbbbbeebdbbbbeebdbbbb050b11666500050bbbbbbbbbbbbbbbbbbbbbbbbbbeebdbbbbbb555055bbbbbb00000000
+bbdd5999299dbbbbbbb0555bbb0555bb550bbbbbbdbbbdbbbdbbdbbbbb5b116000600050bbbbbbbbbbbbbbbbbbbbbbbbbbdbbbdbbbb555bb55bbbbbb00000000
+bb45b999299dbbbbbbb055bbbb055bbb550bbbbbbdbbbdbbbdbbbdbbbb5b1666000655bbbbbbbbbbbbbbbbbbbbbbbbbbbbdbbbdbbbb55bbb55bbbbbb00000000
+bb4bbb9929dbbbbbbb0555bbbbb55bbb550bbbbbbdbbbdbbbdbbbdbbbb5b667760006bbbbbbbbbbbbbbbbbbbbbbbbbbbbbdbbbdbbbb55bbb55bbbbbb00000000
+bb4bbbb92dbbbbbbbb055bbbbbb55bbb55bbbbbbbdbbb8bbbdbbbdbbbb54677776006bbbbbbbbbbbbbbbbbbbbbbbbbbbbbdbbb8bbbb55bbb55bbbbbb00000000
+bb4bbbbb2bbbbbbbbbb55bbbbb445bbb55bbbbbbb88bbb8bb88bb88bb55567777600655bbbbbbbbbbbbbbbbbbbbbbbbbbb88bbb8bb445bbb55bbbbbb00000000
+bbbbbbbbbbbbbbbbbb444bbbbbb44bbb55bbbbbbbbbbbbbbbbbbbbbbbbbbb6776006bb5bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb44bbb55bbbbbb00000000
+bbbbbbbbbbbbbbbbbbbbbbb4bbbbbbb444bbbbbbbbbbbbbbbbbbbbbbbbbbbb66666bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb444bbbbbb00000000
+bbdddd44b2bbbbbbbbb66d26d6bbbbbbbbbbbbbbb050b11666500050bbbbbbdccddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbd4dd09bb2bbbbbbb660d66d66bbbbbbbbbbbbbbb5b116600600050bbbbbbd77dddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bb4ddd99bb2bbbbbbb660d66d66bbbbb0bbbbbbbbb5b1677600655bbbbbbbddd71ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bb4dd092b2bbbbbbbbb66d66d6fbbbbb55bbbbbbbb5b677776006bbbbbafff99ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbd44446b2bbbbbbbbbbfd655fbbbbbb5bbbbbbbbb54677776006bbbaaaaad1ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbdddd06b2bbbbbbbbbbb5555fbbbbbbfbbbbbbbb55567777600655b99999bd11d1bbbb0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbdddd96b4bbbbbbbbbbb555f5bbbbbb7bbbbbbbbbbbb6776006bb5bbb9bbb1dd9d55550bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbddd599244bbbbbbbbbb55555bbbbbb6dbbbbbbbbbbbb66666bbbbbbb5bbb11d9fff750bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
 __gff__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000001000000000000000000000000000101010000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1126,11 +1173,11 @@ __sfx__
 011000002625026250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 011000002925029250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 011000002b2502b250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-01100000306753060534505306051c5051c5051c5051c5051c5051c5051c505005051c5051c5051c5051c5051c505005051c5051c5051c5051c50500505005050050500505005050050500505005050050500505
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0002000029670296502964029630296302962029620296102961029610296102b6002d6052d6002f6051c60530605006051c6051c6051c6051c60500605006050060500605006050060500605006050060500605
+011800000905334600346003460032600326003260032600306003060030600306002f6002f600236002360023600006000060000600006000060000600006000060000600006000060000600006000060000600
+000100003c2503b2323c2223b2223c2123b2123260032600306003060030600306002f6002f600346003460034600346000060000600006000060000600006000060000600006000060000600006000060000600
+010100003c2003b2003c2023b2023c2023b202392003b2023c200302003c200302003c20000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200
+01020000372003a202372023a202372023a202372023a202002003a20000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
