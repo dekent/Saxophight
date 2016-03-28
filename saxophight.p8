@@ -9,6 +9,7 @@ screen=0 --0:title,1:play,2:lose
 
 --title screen
 title_direction=0
+title_max_x=52
 top_score_blues=0
 top_score_bebop=0
 
@@ -639,9 +640,11 @@ function _update()
   
   if btnp(1) then
    title_direction = 1
+   title_max_x = 60
   end
   
   if btnp(0) then
+   title_max_x = 52
    title_direction = 0
   end
   
@@ -915,6 +918,7 @@ function _draw()
  cls()
 
  if screen == 0 then
+  --render title screen text
   print_centered("saxophight",65,2,4)
   print_centered("saxophight",64,1,10)
   print_centered("help max the sax make his",64,8)
@@ -943,8 +947,22 @@ function _draw()
   print_centered("bebop",96,38,bebop_color2)
   print_centered_n(top_score_bebop,97,46,bebop_color1)
   print_centered_n(top_score_bebop,96,45,bebop_color2)
-  
-  
+		
+		--render title screen scene
+		for i=0,16 do
+			spr(64,i*8,88,1,2)
+			spr(97,i*8,104)
+		end
+		
+		--render title screen max
+		palt(0,false)
+		palt(11,true)
+		if title_direction == 0 then
+		 spr(8,title_max_x,72,2,4)
+		else
+		 spr(0,title_max_x,72,2,4)
+		end
+		palt(0,true)
  end
  
  if screen == 1 then
@@ -966,7 +984,7 @@ function _draw()
 	 	spr(49-shift+sprite, p.x+8, p.y-shift/2)
 	 end
 	 
-	 palt(o,true)
+	 palt(0,true)
 	 
 	 --render the brass enemies
 	 draw_enemies()
