@@ -10,8 +10,10 @@ screen=0 --0:title,1:play,2:lose
 --title screen
 title_direction=0
 title_max_x=52
+title_sprite=8
 top_score_blues=0
 top_score_bebop=0
+title_transition=false
 
 --player
 p = {}
@@ -41,8 +43,8 @@ function _init()
 end
 
 --reset the game for another round
---game_mode=1:blues
---game_mode=2:bebop
+--game_mode=0:blues
+--game_mode=1:bebop
 function reset(game_mode)
  --reset a lot of state
  notes = {}
@@ -58,7 +60,6 @@ function reset(game_mode)
  arm_in = true
  head_nod = false
  play_snare = false
- play_kick = false
  play_hihat = false
  snare_counter = 0
  kick_counter = 0
@@ -91,9 +92,9 @@ function reset(game_mode)
  end
  
  --blues- vs bebop-specific
- if (game_mode == 1) then
+ if (game_mode == 0) then
   beat = blues_beat
-  music(0)
+  music(0,0)
  else
   beat = bebop_beat
  end
@@ -173,11 +174,7 @@ function check_object_collisions()
      tpt.frame = 0
 	    tpt.dx = 0
 	    tpt.dy = -1
-	    if game_points % 3 == 0 then
- 	    play_kick = true
- 	   else
- 	    play_hihat = true
- 	   end
+ 	   play_hihat = true
     end
   	 destroy_note(note)
    end
@@ -603,11 +600,11 @@ function update_music()
 		note_counter += 1
 		if (note_counter > 4) then
 			chord_counter += 1
-			if (chord_counter == 9) music(1)
-			if (chord_counter == 17) music(2)
+			if (chord_counter == 9) music(1,0)
+			if (chord_counter == 17) music(2,0)
 			if (chord_counter > #blues_chords) then
 			 chord_counter = 1
-			 music(0)
+			 music(0,0)
 			end
 			note_counter = 1
 		end
@@ -616,41 +613,81 @@ function update_music()
 end
 
 function update_drums()
+ if counter == 0 and breath<14 then
+  sfx(20,1)
+  kick_counter = 4
+ end
  if counter == 0 or counter == flr(2/3*beat) then
-  if play_kick then
-   sfx(20,1)
-   kick_counter = 4
-   play_kick = false
-  end
-  if play_hihat then
-   sfx(21,1)
-   hihat_counter = 4
-   play_hihat = false
-  end
   if play_snare then
    sfx(19,2)
    snare_counter = 4
    play_snare = false
+  elseif play_hihat then
+   sfx(21,2)
+   hihat_counter = 4
+   play_hihat = false
   end
  end
 end
 
 function _update()
  if screen == 0 then
-  
-  if btnp(1) then
-   title_direction = 1
-   title_max_x = 60
-  end
-  
-  if btnp(0) then
-   title_max_x = 52
-   title_direction = 0
-  end
-  
-  if btnp(4) then
-   screen = 1
-   reset(1)
+  if not title_transition then
+	  if btnp(1) then
+	   title_direction = 1
+    title_max_x = 60
+    title_sprite = 0
+   end
+   
+   if btnp(0) then
+    title_max_x = 52
+    title_direction = 0
+    title_sprite = 8
+   end
+   
+   if btnp(4) then
+    title_transition = true
+    sfx(19,1)
+   end
+  else
+   --walk off screen
+   if (title_max_x <= 28 and (title_max_x-4)%12 == 0) or (title_max_x >=96 and (title_max_x+3)%9 == 0) then
+    sfx(21,1)
+   end
+   title_max_x += title_direction*2-1
+   
+   --title_max_x += 1
+   if title_max_x <= -68 or title_max_x >= 168 then
+    screen = 1
+    reset(title_direction)
+    if title_direction == 0 then
+     title_max_x = 52
+     title_sprite = 8
+    else
+     title_max_x = 60
+     title_sprite = 0
+    end
+    title_transition = false
+   else
+   --set sprite
+    if title_direction == 0 then
+     if title_max_x > 40 or (title_max_x <= 4 and title_max_x > -8) then
+      title_sprite = 10
+     elseif (title_max_x <= 28 and title_max_x > 16) or title_max_x <= -20 then
+      title_sprite = 12
+     else
+      title_sprite = 8
+     end
+    else
+     if title_max_x < 69 or (title_max_x >= 96 and title_max_x < 105) or title_max_x >= 132 then
+      title_sprite = 2
+     elseif (title_max_x >= 78 and title_max_x < 87) or (title_max_x >= 114 and title_max_x < 123) then
+      title_sprite = 4
+     else
+      title_sprite = 0
+     end
+    end
+   end
   end
  end
 
@@ -702,7 +739,8 @@ function _update()
 
   --debug actions
   if (btn(1,1)) then
-   reset(1)
+   screen = 0
+   music(-1,0)
    return
   end
 
@@ -957,12 +995,35 @@ function _draw()
 		--render title screen max
 		palt(0,false)
 		palt(11,true)
-		if title_direction == 0 then
-		 spr(8,title_max_x,72,2,4)
+		if title_direction == 0 then		 
+		 spr(title_sprite,title_max_x,72,2,4)
 		else
-		 spr(0,title_max_x,72,2,4)
+		 spr(title_sprite,title_max_x,72,2,4)
 		end
 		palt(0,true)
+		
+		--render screen wipe
+		
+		
+		--render ready text
+		if title_max_x <= -20 and title_max_x > -32 then
+		print_centered("one           ",64,64,6)
+		elseif title_max_x <= -32 and title_max_x > -44 then
+		 print_centered("one more      ",64,64,6)
+		elseif title_max_x <= -44 and title_max_x > -56 then
+		 print_centered("one more time ",64,64,6) 
+		elseif title_max_x <= -56 then
+ 		print_centered("one more time!",64,64,6)
+		end
+		if title_max_x >= 132 and title_max_x < 141 then
+		print_centered("one           ",64,64,6)
+		elseif title_max_x >= 141 and title_max_x < 150 then
+		 print_centered("one more      ",64,64,6)
+		elseif title_max_x >= 150 and title_max_x < 159 then
+		 print_centered("one more once ",64,64,6)
+		elseif title_max_x >= 159 then
+		 print_centered("one more once!",64,64,6)
+		end
  end
  
  if screen == 1 then
@@ -1192,7 +1253,7 @@ __sfx__
 011000002925029250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 011000002b2502b250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0002000029670296502964029630296302962029620296102961029610296102b6002d6052d6002f6051c60530605006051c6051c6051c6051c60500605006050060500605006050060500605006050060500605
-011800000905334600346003460032600326003260032600306003060030600306002f6002f600236002360023600006000060000600006000060000600006000060000600006000060000600006000060000600
+001800000905334600346000100032600326003260032600306003060030600306002f6002f600236002360023600006000060000600006000060000600006000060000600006000060000600006000060000600
 000100003c2503b2323c2223b2223c2123b2123260032600306003060030600306002f6002f600346003460034600346000060000600006000060000600006000060000600006000060000600006000060000600
 010100003c2003b2003c2023b2023c2023b202392003b2023c200302003c200302003c20000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200
 01020000372003a202372023a202372023a202372023a202002003a20000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200002000020000200
