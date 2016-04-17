@@ -15,6 +15,11 @@ top_score_blues=0
 top_score_bebop=0
 title_transition=false
 
+--gameover screen
+gameover_transition=true
+gameover_counter=0
+set_gameover=false
+
 --player
 p = {}
 p.max_dx = 2
@@ -67,7 +72,8 @@ function reset(game_mode)
  
  --hud
  game_points = 0
- health = 40
+ --health = 40
+ health = 2
  breath = 40
  
  --player initialization
@@ -189,7 +195,7 @@ function check_object_collisions()
     health -= 2.5
     if (health<0) then
     	health=0
-    	--todo: lose condition
+    	set_gameover = true
     end
     tpt.sprite += 8
     tpt.frame = 0
@@ -425,9 +431,9 @@ end
 
 function move_note(note)
 	h_physics(note)
-	if(h_collision(note)) destroy_note(note)
+	if(h_collision(note) and screen==1) destroy_note(note)
 	v_physics(note)
-	if(v_collision(note)) destroy_note(note)
+	if(v_collision(note) and screen==1) destroy_note(note)
 end
 
 function move_trumpet(tpt)
@@ -630,6 +636,23 @@ function update_drums()
  end
 end
 
+function freeze_objects()
+ for tpt in all(trumpets) do
+  if (tpt.sprite < 136) then
+	  tpt.sprite += 8
+   tpt.frame = 0
+  end
+  tpt.dx = 0
+	 tpt.dy = 0
+	 tpt.ddx = 0
+ end
+ for note in all(notes) do
+	  note.dx = 0
+	  note.dy = 0
+	  note.ddx = 0
+ end
+end
+
 function _update()
  if screen == 0 then
   if not title_transition then
@@ -757,10 +780,41 @@ function _update()
 	 update_drums()
 	 update_animations()
 	 update_music()
+	 
+	 --gameover check
+	 if set_gameover then
+	  music(-1,0)
+   screen=2
+   freeze_objects()
+   set_gameover = false
+	 end
  end
  
  if screen == 2 then
- 
+  if gameover_transition then
+   foreach(notes, move_note)
+   foreach(trumpets, move_trumpet)
+   gameover_counter += 1
+   if gameover_counter >= 300 then
+    gameover_transition = false
+   end
+  else
+   --wait for input
+   if btnp(4) or btnp(5) then
+    if beat == blues_beat then
+     if game_points > top_score_blues then
+      top_score_blues = game_points
+     end
+    else
+     if game_points > top_score_bebop then
+      top_score_bebop = game_points
+     end
+    end
+    screen = 0
+    gameover_counter = 0
+    gameover_transition = true
+   end
+  end
  end
 end
 
@@ -1002,8 +1056,7 @@ function _draw()
 		end
 		palt(0,true)
 		
-		--render screen wipe
-		
+		--render screen wipe?
 		
 		--render ready text
 		if title_max_x <= -20 and title_max_x > -32 then
@@ -1064,7 +1117,32 @@ function _draw()
  end
  
  if screen == 2 then
- 
+  if gameover_counter < 154 then
+   --render (mostly) frozen scene
+   update_camera()
+	  map(0,0,0,0,48,32) 
+   palt(0,false)
+   palt(11,true)
+   draw_background_chars()
+	  sprite = p.sprite
+	  if (p.dir == -1) sprite+=8
+	  for shift=0,48,16 do
+	  	spr(48-shift+sprite, p.x, p.y-shift/2)
+	  	spr(49-shift+sprite, p.x+8, p.y-shift/2)
+	  end
+ 	 palt(0,true)
+	  draw_enemies()
+	  draw_notes()
+   draw_hud()
+  
+   --render transition effects
+   if gameover_counter > 90 then
+    rectfill(0,0,128,(gameover_counter-90)*2,0)
+   end
+  else
+   --render phrase and final score
+   print("doneskies!",10,10,4)
+  end
  end
 end
 __gfx__
