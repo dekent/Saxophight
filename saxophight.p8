@@ -52,6 +52,8 @@ sax_colors = {true,false,false,false,false}
 function _init()
 	--todo: read in high scores
 	--todo: set unlocks based on high scores
+
+ music(7)
 end
 
 --reset the game for another round
@@ -815,8 +817,9 @@ function _update()
    end
    
    if btnp(4) then
+    music(-1)
     title_transition = true
-    sfx(19,1)
+    sfx(19,3)
    end
   else
    --walk off screen
@@ -961,6 +964,7 @@ function _update()
     screen = 0
     gameover_counter = 0
     gameover_transition = true
+    music(7)
    end
   end
  end
@@ -1654,22 +1658,22 @@ __music__
 04 00404344
 04 01424344
 04 02424344
-00 03424344
-00 04424344
-00 05424344
+04 03424344
+04 04424344
+04 05424344
 04 27282944
-01 2a2d4344
-01 2b2d4344
-01 2c2e4344
-01 2a2f4344
-01 2b2f4344
-01 2c304344
+00 2a2d4344
+00 2b2d4344
+00 2c2e4344
+00 2a2f4344
+00 2b2f4344
+00 2c304344
 01 2a2f3144
-01 2b2f3144
-01 2c303244
-01 2a2f3344
-01 2b2f3444
-04 2c303544
+00 2b2f3144
+00 2c303244
+00 2a2f3344
+00 2b2f3444
+02 2c303544
 00 41424344
 00 41424344
 00 41424344
