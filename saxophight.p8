@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 7
+version 8
 __lua__
 --saxophight!
 --help max the sax make his way in the cutthroat world of underground jazz
@@ -14,6 +14,8 @@ title_sprite=8
 top_score_blues=0
 top_score_bebop=0
 title_transition=false
+title_counter=0
+show_instructions=false
 
 --gameover screen
 gameover_transition=true
@@ -36,9 +38,6 @@ bebop_beat = 9 --frames per beat (150 bpm)
 g = .15 --gravity acceleration (pixels/frame^2)
 max_dy = 7 --terminal vel, prevents going through 8x8 tile
 camera_delay = 4
-debug_freeze = false
-slow_count = 0
-debug_string="nope"
 
 --music stuff
 blues_chords = {1,1,1,1,4,4,1,1,5,4,1,5,1,1,1,1,4,4,1,1,5,4,1,1}
@@ -363,7 +362,11 @@ function blow_note(length)
 	 create_note(.75,-3.5,orientation)
 	else
 	 if (btn(3)) then
-	  create_note(2.25,-2,orientation)
+	  if on_ground(p) then
+		  create_note(2.25,-2,orientation)
+		 else
+		 create_note(2.25,0,orientation)
+		 end
 	 else
 	  create_note(1.25,-2.85,orientation)
 	 end
@@ -791,35 +794,49 @@ end
 
 function _update()
  if screen == 0 then
-  if not title_transition then
-	  if btnp(1) then
-	   title_direction = 1
-    title_max_x = 60
-    title_sprite = 0
-   end
+  if not title_transition then	 
+  title_counter = (title_counter+1)%120 
+	  if not show_instructions then
+	  
+	   if btnp(1) then
+	    title_direction = 1
+     title_max_x = 60
+     title_sprite = 0
+    end
    
-   if btnp(0) then
-    title_max_x = 52
-    title_direction = 0
-    title_sprite = 8
-   end
+    if btnp(0) then
+     title_max_x = 52
+     title_direction = 0
+     title_sprite = 8
+    end
    
-   if btnp(2) then
-    p.sax = (p.sax + 1) % 5
-    while not sax_colors[p.sax+1] do
+    if btnp(2) then
      p.sax = (p.sax + 1) % 5
-    end
-   elseif btnp(3) then
-    p.sax = (p.sax - 1) % 5
-    while not sax_colors[p.sax+1] do
+     while not sax_colors[p.sax+1] do
+      p.sax = (p.sax + 1) % 5
+     end
+    elseif btnp(3) then
      p.sax = (p.sax - 1) % 5
+     while not sax_colors[p.sax+1] do
+      p.sax = (p.sax - 1) % 5
+     end
     end
-   end
    
-   if btnp(4) then
-    music(-1)
-    title_transition = true
-    sfx(19,3)
+    if btnp(4) then
+     music(-1)
+     title_transition = true
+     sfx(19,3)
+    elseif btnp(5) then
+     show_instructions = true
+     instruction_page = 1
+    end
+   else
+    if btnp(4) or btnp(5) then
+     instruction_page += 1
+     if instruction_page > 2 then
+      show_instructions = false
+     end
+    end
    end
   else
    --walk off screen
@@ -840,6 +857,7 @@ function _update()
      title_sprite = 0
     end
     title_transition = false
+    title_counter = 0
    else
    --set sprite
     if title_direction == 0 then
@@ -863,11 +881,7 @@ function _update()
   end
  end
 
- if screen == 1 then
-  slow_count += 1
-  --if (slow_count % 15 ~= 0) return
-  if (debug_freeze) return
-  
+ if screen == 1 then  
   --update the state of the world
   foreach(notes, move_note)
   foreach(trumpets, move_trumpet)
@@ -906,16 +920,8 @@ function _update()
 	 if (btn(5)) then
 	 	blow()
 	 else
-	 	if (breath<40) breath+=1
-	 	if (breath>40) breath=40
+	 	breath = min(breath+1,40)	 	
 	 end
-
-  --debug actions
-  if (btn(1,1)) then
-   screen = 0
-   music(-1,0)
-   return
-  end
 
   --update player position
 	 standard_physics(p)
@@ -1169,11 +1175,14 @@ function draw_hud()
  
 end
 
-function print_centered(text,tx,ty,tcol)
- if (tcol == nil) then
+function print_centered(text,tx,ty,tcol,numspecial)
+ if tcol == nil then
  	tcol = 6
  end
- print(text, tx-#text*2, ty, tcol)
+ if numspecial == nil then
+  numspecial = 0
+ end
+ print(text, tx-#text*2-numspecial*3/2, ty, tcol)
 end
 
 --print centered for numbers
@@ -1206,6 +1215,60 @@ end
 function reset_sax_color()
  pal(9,9)
  pal(10,10)
+end
+
+function instruction(page)
+ rectfill(11,11,119,119,0)
+ rectfill(10,10,118,118,1)
+ rect(12,12,116,116,6)
+ if page == 1 then
+  palt(11,true)
+  palt(0,false)
+  spr(0,18,18,2,2)
+  palt(11,false)
+  palt(0,true)
+  print("guide max the sax",42,20,6)
+  print("through his solo",42,28,6)
+  
+  spr(137,18,42)
+  spr(134,26,42)
+  print("avoid trumpets",42,44,6)
+  
+  spr(180,18,58)
+  spr(187,26,58)
+  print("protect max by",42,60,6)
+  print("playing notes",42,68,6)
+  
+  spr(160,18,84)
+  spr(161,26,84)
+  print("beware of extra",42,86,6)
+  print("bebop accidentals",42,94,6)
+  
+  print("1/2",100,106,6)
+ else
+  print("title screen",18,18,6)
+  print("‹‘",22,26,6)
+  print("select genre",42,26,6)
+  print("”ƒ",22,34,6)
+  print("select saxophone",42,34,6)
+  print("playing a solo",18,50,6)
+  print("‹‘",22,58,6)
+  print("move",42,58,6)
+  print("Ž/z",22,66,6)
+  print("jump",42,66,6)
+  print("—/x",22,74,6)
+  print("blow",42,74,6)
+  print("”ƒ",22,82,6)
+  print("angle notes",42,82,6)
+  print("2/2",100,106,6)
+  
+  palt(11,true)
+  palt(0,true)
+  spr(192,18,90,2,3)
+  spr(199,34,90,2,3)
+  palt(0,true)
+  palt(11,false)
+ end
 end
 
 function _draw()
@@ -1262,8 +1325,18 @@ function _draw()
 		else
 		 sax_msg = sax_msg.."classic"
 		end
-		
+			
 		print_centered(sax_msg,63,112,6)
+
+		--render instructions
+		if not title_transition then
+		 if title_counter >= 30 and title_counter < 60 then
+		  print_centered("press Ž/z to start",63,120,6,1)
+		 elseif title_counter >= 90 then
+		 	print_centered("press —/x for instructions",63,120,6,1)
+		 end
+		end
+		
 		--render title screen max
 		palt(0,false)
 		palt(11,true)
@@ -1296,9 +1369,12 @@ function _draw()
 		elseif title_max_x >= 159 then
 		 print_centered("one more once!",64,64,6)
 		end
- end
- 
- if screen == 1 then
+
+  --render instruction page
+		if show_instructions then
+   instruction(instruction_page)
+  end
+ elseif screen == 1 then
   --render background
   update_camera()
   update_background()
@@ -1329,15 +1405,10 @@ function _draw()
 	 
 	 --render effects
 	 draw_effects()
- 	
- 	--debug
-  --print(max(sqrt(game_points/3),3), p.x, p.y-30) 
   
   --render hud
   draw_hud()
- end
- 
- if screen == 2 then
+ elseif screen == 2 then
   if gameover_counter < 154 then
    --render (mostly) frozen scene
    update_camera()
