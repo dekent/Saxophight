@@ -1,8 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
---saxophight!
---help max the sax make his way in the cutthroat world of underground jazz
+--saxophight!    help max the sax
+--perform the solo of his carreer
 
 --game screen
 screen=0 --0:title,1:play,2:lose
@@ -55,14 +55,18 @@ bass_msgs = {
  "feel the groove",
  "woo!",
  "that's it!",
- "keep that flow"
+ "keep that flow, max!",
+ "feel the swing",
+ "blow that horn"
 }
 drum_msgs = {
  "hot licks, max!",
  "feel the rhythm",
  "keep it movin'",
  "you're killin' it!",
- "solid"
+ "solid",
+ "break it down, max!",
+ "right on!"
 }
 bar_msgs = {
  "groovin'",
@@ -71,21 +75,28 @@ bar_msgs = {
  "oh yeah",
  "that's what i'm talkin' about",
  "mhmm",
- "sounds good, max"
+ "sounds good, max",
+ "get down!",
+ "jammin'",
+ "don't stop!"
 }
 drink_msgs = {
  "that cat can blow!",
  "yeah!",
  "swingin'",
  "i'm feelin' it",
- "whoa!"
+ "whoa!",
+ "he can wail",
+ "swanky!"
 }
 hat_msgs = {
  "hat's off to you",
  "nice!",
  "toe tappin'!",
  "how's he still going?",
- "ornithological!"
+ "ornithological!",
+ "he's got some chops",
+ "wild"
 }
 bass_hit_msgs = {
  "oof...",
@@ -106,7 +117,12 @@ drum_hit_msgs = {
 gameover_msgs = {
  "let's take it from the top!",
  "take five",
- "don't blow your top!"
+ "don't blow your top",
+ "back to the head",
+ "we'll be here all week",
+ "don't split just yet!",
+ "how 'bout another round?",
+ "shine that sax"
 }
 
 function _init()
@@ -159,6 +175,7 @@ function reset(game_mode)
   msgs[i].text = ""
   msgs[i].counter = 0
  end
+ gameover_msg_set = false
  
  --hud
  game_points = 0
@@ -672,12 +689,12 @@ function create_note(dx,dy,orientation)
 end
 
 function spawn_enemies()
- if (#tpt_spawns+#trumpets <= max(sqrt(game_points/3),3) and rnd(1) > .75) then
+ if (#tpt_spawns+#trumpets <= max(sqrt(min(game_points,500)/3),3) and rnd(1) > .75) then
   tpt_spawn = create_trumpet_spawn()
   add(tpt_spawns, tpt_spawn)
  end
  if beat == bebop_beat then
-  if #accidentals < 2 and rnd(1) > .95 then
+  if #accidentals < 1 and rnd(1) > .95 then
    create_accidental()
   end
  end 
@@ -728,7 +745,7 @@ function create_accidental()
  end
  --y:112-128
  spr_y = 112 + flr(rnd(17))
- spr_dx = .8 + rnd(.4)
+ spr_dx = 1 + rnd(.4)
  accidental = create_object(160+spr_offset,0,spr_y,spr_dx,0,x_col,y_col)
  if rnd(1) > 0.5 then
   accidental.x = 304
@@ -1674,7 +1691,10 @@ function _draw()
      replay_text_color1 = 2
      replay_text_color2 = 8
     end
-    gameover_msg = rnd_msg(gameover_msgs)
+    if not gameover_msg_set then
+	    gameover_msg = rnd_msg(gameover_msgs)
+	    gameover_msg_set = true
+	   end
     print_centered(gameover_msg,64,80,replay_text_color1)
     print_centered(gameover_msg,63,79,replay_text_color2)
    end
