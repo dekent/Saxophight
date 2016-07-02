@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 --saxophight!    help max the sax
---perform the solo of his carreer
+--perform the solo of his career!
 
 --game screen
 screen=0 --0:title,1:play,2:lose
@@ -56,7 +56,7 @@ bass_msgs = {
  "woo!",
  "that's it!",
  "keep that flow, max!",
- "feel the swing",
+ "swing it!",
  "blow that horn"
 }
 drum_msgs = {
@@ -86,7 +86,7 @@ drink_msgs = {
  "swingin'",
  "i'm feelin' it",
  "whoa!",
- "he can wail",
+ "he can really wail",
  "swanky!"
 }
 hat_msgs = {
@@ -122,7 +122,8 @@ gameover_msgs = {
  "we'll be here all week",
  "don't split just yet!",
  "how 'bout another round?",
- "shine that sax"
+ "tune up that sax",
+ "take a deep breath"
 }
 
 function _init()
