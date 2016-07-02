@@ -47,6 +47,29 @@ bebop_bass_pos = {1,2,1,0,2,0,2,1,2,0,1,2,1,0,1,0,2,0,1,2,0,2,1,0,1,0,2,0,1,0,2,
 
 --unlockables
 sax_colors = {true,false,false,false,false}
+msg_thresholds = {100,200,350,500,750,1000,1250,1500,1750,2000}
+
+--messages
+bass_msgs = {
+ "keep it up, max!",
+ "feel the groove"
+}
+drum_msgs = {
+ "hot licks, max!",
+ "feel the rhythm"
+}
+bar_msgs = {
+ "groovin'",
+ "dig it!"
+}
+drink_msgs = {
+ "that cat can blow!",
+ "yeah!"
+}
+hat_msgs = {
+ "hat's off to you",
+ "nice!"
+}
 
 function _init()
 	--todo: read in high scores
@@ -78,12 +101,12 @@ function reset(game_mode)
  kick_counter = 0
  hihat_counter = 0
  new_unlock = false
- message1 = 0
- message2 = 0
- message3 = 0
- message1_count = 0
- message2_count = 0
- message3_count = 0
+ msgs = {}
+ for i=1,5 do
+  msgs[i] = {}
+  msgs[i].text = ""
+  msgs[i].counter = 0
+ end
  
  --hud
  game_points = 0
@@ -193,6 +216,7 @@ function check_object_collisions()
    if (obj_collision(tpt, note)) then
     if (tpt.sprite < 136) then
      game_points += 10
+     check_msg_thresholds(10)
 	    tpt.sprite += 8
      tpt.frame = 0
 	    tpt.dx = 0
@@ -693,9 +717,13 @@ end
 
 function update_tpt_animation(tpt)
  --fallen trumpet
- if (tpt.sprite >= 136) then
+ if tpt.sprite >= 136 then
  	tpt.frame += 1
- 	if (tpt.frame > 120) del(trumpets, tpt) game_points+=1
+ 	if tpt.frame > 120 then
+ 	 del(trumpets, tpt)
+ 	 game_points+=1
+ 	 check_msg_thresholds(1)
+ 	end
   return
  end
   
@@ -790,6 +818,62 @@ function freeze_objects()
   accidental.dy = 0
   accidental.ddx = 0
  end
+end
+
+function update_msgs()
+ for i=1,5 do
+  msgs[i].counter = max(msgs[i].counter - 1, 0)
+ end
+end
+
+function check_msg_thresholds(change)
+ for i=1,#msg_thresholds do
+  if game_points>=msg_thresholds[i] and game_points-change<msg_thresholds[i] then
+   create_msgs()
+   return
+  end
+ end
+end
+
+function create_msgs()
+ msg_chance = .333
+ if game_points>=500 then
+  msg_chance = .5
+ elseif game_points>=1000 then
+  msg_chance = .667
+ end
+ 
+ --musicians
+ if rnd(1) < msg_chance then
+  if rnd(1) < .5 then
+	  msgs[1].text = rnd_msg(bass_msgs)
+ 	 msgs[1].counter = 240
+ 	else
+ 	 msgs[2].text = rnd_msg(drum_msgs)
+ 	 msgs[2].counter = 240
+ 	end
+ end
+ 
+ --bartender
+ if rnd(1) < msg_chance then
+  msgs[3].text = rnd_msg(bar_msgs)
+  msgs[3].counter = 240
+ end
+ 
+ --listeners
+ if rnd(1) < msg_chance then
+  if rnd(1) < .5 then
+	  msgs[4].text = rnd_msg(drink_msgs)
+ 	 msgs[4].counter = 240
+ 	else
+ 	 msgs[5].text = rnd_msg(hat_msgs)
+ 	 msgs[5].counter = 240
+ 	end
+ end
+end
+
+function rnd_msg(msg_list)
+ return msg_list[flr(rnd(#msg_list))+1]
 end
 
 function _update()
@@ -936,6 +1020,7 @@ function _update()
 	 update_drums()
 	 update_animations()
 	 update_music()
+	 update_msgs()
 	 
 	 --gameover check
 	 if set_gameover then
@@ -1271,6 +1356,36 @@ function instruction(page)
  end
 end
 
+function draw_comments()
+ for i=1,5 do
+  if msgs[i].counter > 0 then
+   msg_y = 72
+   if i==1 then
+    msg_x = 93
+    msg_color = 8
+   elseif i==2 then
+    msg_x = 116
+    msg_color = 9
+   elseif i==3 then
+    msg_x = 153
+    msg_color = 6
+    for i=1,5 do
+     if i~=3 and msgs[i].counter > 0 then
+      msg_y = 64
+     end
+    end
+   elseif i==4 then
+    msg_x = 188
+    msg_color = 14
+   else
+    msg_x = 199
+    msg_color = 15
+   end
+   print_centered(msgs[i].text, msg_x, msg_y, msg_color)
+  end
+ end
+end
+
 function _draw()
 
  cls()
@@ -1384,6 +1499,7 @@ function _draw()
   palt(0,false)
   palt(11,true)
   draw_background_chars()
+  draw_comments()
 	 
 	 --render max the sax
 	 sprite = p.sprite
