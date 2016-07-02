@@ -47,34 +47,86 @@ bebop_bass_pos = {1,2,1,0,2,0,2,1,2,0,1,2,1,0,1,0,2,0,1,2,0,2,1,0,1,0,2,0,1,0,2,
 
 --unlockables
 sax_colors = {true,false,false,false,false}
-msg_thresholds = {100,200,350,500,750,1000,1250,1500,1750,2000}
+msg_thresholds = {50,100,200,300,450,600,800,1000,1250,1500,1800,2100}
 
 --messages
 bass_msgs = {
  "keep it up, max!",
- "feel the groove"
+ "feel the groove",
+ "woo!",
+ "that's it!",
+ "keep that flow"
 }
 drum_msgs = {
  "hot licks, max!",
- "feel the rhythm"
+ "feel the rhythm",
+ "keep it movin'",
+ "you're killin' it!",
+ "solid"
 }
 bar_msgs = {
  "groovin'",
- "dig it!"
+ "dig it!",
+ "drink's on me, max!",
+ "oh yeah",
+ "that's what i'm talkin' about",
+ "mhmm",
+ "sounds good, max"
 }
 drink_msgs = {
  "that cat can blow!",
- "yeah!"
+ "yeah!",
+ "swingin'",
+ "i'm feelin' it",
+ "whoa!"
 }
 hat_msgs = {
  "hat's off to you",
- "nice!"
+ "nice!",
+ "toe tappin'!",
+ "how's he still going?",
+ "ornithological!"
+}
+bass_hit_msgs = {
+ "oof...",
+ "ouch!",
+ "stay in key, max!",
+ "watch those accidentals!",
+ "keep at it!",
+ "1 2 3 4"
+}
+drum_hit_msgs = {
+ "get back in the swing!",
+ "hmm...",
+ "relax, max!",
+ "err...",
+ "bounce back, max!",
+ "stay focused"
+}
+gameover_msgs = {
+ "let's take it from the top!",
+ "take five",
+ "don't blow your top!"
 }
 
 function _init()
-	--todo: read in high scores
-	--todo: set unlocks based on high scores
-
+ --read high score data, set unlocks
+ cartdata("saxophight")
+ top_score_blues = dget(0)
+ top_score_bebop = dget(1)
+ if top_score_blues >= 500 then
+ 	sax_colors[2] = true
+ end
+ if top_score_blues >= 1000 then
+  sax_colors[4] = true
+ end
+ if top_score_bebop >= 500 then
+  sax_colors[3] = true
+ end
+ if top_score_bebop >= 1000 then
+  sax_colors[5] = true
+ end
+ 
  music(7)
 end
 
@@ -252,6 +304,17 @@ function check_object_collisions()
    shatter_effect.sprite=188
    add(shatter, shatter_effect)
    del(accidentals, accidental)
+   if rnd(1) < .5 then
+    if rnd(1) < .5 then
+     msgs[1].text = rnd_msg(bass_hit_msgs)
+     msgs[1].counter = 240
+     msgs[2].counter = 0
+    else
+     msgs[2].text = rnd_msg(drum_hit_msgs)
+     msgs[2].counter = 240
+     msgs[1].counter = 0
+    end
+   end
   end
  end
 end
@@ -848,9 +911,11 @@ function create_msgs()
   if rnd(1) < .5 then
 	  msgs[1].text = rnd_msg(bass_msgs)
  	 msgs[1].counter = 240
+ 	 msgs[2].counter = 0
  	else
  	 msgs[2].text = rnd_msg(drum_msgs)
  	 msgs[2].counter = 240
+ 	 msgs[1].counter = 0
  	end
  end
  
@@ -865,9 +930,11 @@ function create_msgs()
   if rnd(1) < .5 then
 	  msgs[4].text = rnd_msg(drink_msgs)
  	 msgs[4].counter = 240
+ 	 msgs[5].counter = 0
  	else
  	 msgs[5].text = rnd_msg(hat_msgs)
  	 msgs[5].counter = 240
+ 	 msgs[4].counter = 0
  	end
  end
 end
@@ -1046,10 +1113,12 @@ function _update()
     if beat == blues_beat then
      if game_points > top_score_blues then
       top_score_blues = game_points
+      dset(0,top_score_blues)
      end
     else
      if game_points > top_score_bebop then
       top_score_bebop = game_points
+      dset(1,top_score_bebop)
      end
     end
     screen = 0
@@ -1605,8 +1674,9 @@ function _draw()
      replay_text_color1 = 2
      replay_text_color2 = 8
     end
-    print_centered("let's take it from the top!",64,80,replay_text_color1)
-    print_centered("let's take it from the top!",63,79,replay_text_color2)
+    gameover_msg = rnd_msg(gameover_msgs)
+    print_centered(gameover_msg,64,80,replay_text_color1)
+    print_centered(gameover_msg,63,79,replay_text_color2)
    end
   end
  end
