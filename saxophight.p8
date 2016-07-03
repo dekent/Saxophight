@@ -65,7 +65,7 @@ drum_msgs = {
  "keep it movin'",
  "you're killin' it!",
  "solid",
- "break it down, max!",
+ "break it down",
  "right on!"
 }
 bar_msgs = {
@@ -107,7 +107,7 @@ bass_hit_msgs = {
  "1 2 3 4"
 }
 drum_hit_msgs = {
- "get back in the swing!",
+ "get back in the swing",
  "hmm...",
  "relax, max!",
  "err...",
